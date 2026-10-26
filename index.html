@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>み勘定</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+<style>
+input[type="text"] {
+	box-sizing: border-box;
+	width: 100%;
+}
+</style>
+<script src="./js/index.js" defer></script>
+</head>
+<body>
+<header>
+<h1>み勘定</h1>
+</header>
+<main>
+<section>
+<h2>これはなに</h2>
+<p>
+みかんちゃん名物のひとつに「過剰な勘定」があります。
+これは、みかんちゃんに請求された金額に、JavaScript の式 <code>(1 + Math.random())</code> などを乗じた金額を支払うものです（下図参照）。
+<code>Math.random()</code> に適当な係数が乗ぜられる場合もあります。
+</p>
+<figure style="text-align: center;">
+<img src="./img/image.png" width="706" height="581" loading="lazy" decoding="async">
+<figcaption>JavaScript の乱数を用いた「過剰な勘定」の計算例</figcaption>
+</figure>
+<p>
+この方法には、いくつかの問題点があります。
+まず、みかんちゃんが計算を何回か試行し、「都合のよい」値が得られたときのスクリーンショットだけを提出することが考えられます。
+一方、請求する側が同様のことをすれば、みかんちゃんは、あっという間に破産してしまうかもしれません。
+</p>
+<p>
+表示されている値を得るまでのプロセスを漏れなく保証することは、かなり難しそうです。
+そこで、両者のいづれか一方が結果を恣意的に選べないような、双方が納得できる乱数の生成方法を考えます。
+ここでは、次の手順を提案します。
+</p>
+<ol>
+<li>
+請求する側は、秘密の値 <var>P<sub>C</sub></var> を用意します。
+同様に、みかんちゃんは、秘密の値 <var>P<sub>M</sub></var> を用意します。
+</li>
+<li>
+請求する側は、暗号学的ハッシュ関数 <var>H</var> を用いて <var>H</var>(<var>P<sub>C</sub></var>) を計算し、この値をみかんちゃんに伝えます。
+同様に、みかんちゃんは、<var>H</var>(<var>P<sub>M</sub></var>) を計算し、この値を請求する側に伝えます。
+</li>
+<li>
+請求する側は、<var>P<sub>C</sub></var> をみかんちゃんに伝えます。
+同様に、みかんちゃんは、<var>P<sub>M</sub></var> を請求する側に伝えます。
+</li>
+<li>
+慎重になるのであれば、両者とも、伝えられた秘密の値のハッシュ値を計算し、予め伝えられていたハッシュ値と一致することを確かめます。
+</li>
+<li>
+両者は、<var>P<sub>C</sub></var> と <var>P<sub>M</sub></var> とを連結した値 <var>P<sub>C</sub></var> || <var>P<sub>M</sub></var> を種として、乱数関数 <var>R</var> を用いて <var>R</var>(<var>P<sub>C</sub></var> || <var>P<sub>M</sub></var>) を計算します。
+この値を求める乱数とします。
+</li>
+</ol>
+<p>
+ハッシュ関数 <var>H</var> が適切な性質を備えていれば、相手の秘密の値のハッシュ値を知った後に自分の秘密の値を都合よく変更することが困難になります。
+なお、手順の途中で請求する側やみかんちゃんが逃げ出してしまえば、残された側は、それを受け入れるしかありません。
+</p>
+</section>
+<section>
+<h2>請求してみよう</h2>
+<p>
+ここでは、簡単のために <var>H</var> = <var>R</var> = SHA-256 としています。
+</p>
+<form id="form_hoge">
+<fieldset>
+<legend>請求する側</legend>
+<div>
+<label for="txt_pc">請求する側の秘密の値（<var>P<sub>C</sub></var>）</label>
+<textarea id="txt_pc"></textarea>
+</div>
+<div>
+<button id="btn_hpc">請求する側の秘密の値のハッシュ値を計算する</button>
+</div>
+<div>
+<label for="txt_hpc">請求する側の秘密の値のハッシュ値（<var>H</var>(<var>P<sub>C</sub></var>)）</label>
+<input type="text" id="txt_hpc">
+</div>
+</fieldset>
+<fieldset>
+<legend>請求される側</legend>
+<div>
+<label for="txt_pm">請求される側の秘密の値（<var>P<sub>M</sub></var>）</label>
+<textarea id="txt_pm"></textarea>
+</div>
+<div>
+<button id="btn_hpm">請求される側の秘密の値のハッシュ値を計算する</button>
+</div>
+<div>
+<label for="txt_hpm">請求される側の秘密の値のハッシュ値（<var>H</var>(<var>P<sub>M</sub></var>)）</label>
+<input type="text" id="txt_hpm">
+</div>
+</fieldset>
+<fieldset>
+<legend>乱数を得る</legend>
+<div>
+<button id="btn_rand">入力された内容から乱数を得る</button>
+</div>
+<div>
+<label for="txt_rand">得られた乱数（<var>R</var>(<var>P<sub>C</sub></var> || <var>P<sub>M</sub></var>)）</label>
+<input type="text" id="txt_rand">
+</div>
+<div>
+<button id="btn_round">雑に [0, 1) に丸め込む</button>
+</div>
+<div>
+<label for="txt_round">丸められた乱数</label>
+<input type="text" id="txt_round">
+</div>
+</fieldset>
+</form>
+</section>
+</main>
+<footer>
+<p>
+<small>
+Copyright &copy; 2026 KusaReMKN, and m-tsuru.
+Available under MIT License.
+<a rel="external" href="https://github.com/KusaReMKN/mikanjo">Fork me on GitHub!</a>
+</small>
+</p>
+</footer>
+</body>
+</html>
